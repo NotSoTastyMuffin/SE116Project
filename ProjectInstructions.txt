@@ -1,3 +1,5 @@
+Self-made fast look-up guide for the project.
+
 Services (Srv): security (sec), health (hlt) and education (edu)
 
 Utilities (Utl): electricity (elc), water (wtr) and internet (int)
