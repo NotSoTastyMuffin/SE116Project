@@ -1,0 +1,110 @@
+Services (Srv): security (sec), health (hlt) and education (edu)
+
+Utilities (Utl): electricity (elc), water (wtr) and internet (int)
+
+Resources (Rsr): population (ppl), goods (gds), lifestyle (lfs)
+
+------------------------------------------------------------------------------------
+Zones:
+    Srv Zones: Works within a range, connections are not necessary
+        Police Station (F): +sec
+        Hospital (D): +hlt
+        School (S): +edu
+
+    Utl Zones: They operate per tick
+        Power Plant (P): +100 elc
+        Water Pumping Station (W): +100 wtr
+        Internet Hub (T): +100 int
+
+    Rsr Zones: They start at lvl 0
+        House (H): Utl -> ppl
+        Industrial (I): Utl + ppl -> gds
+        Commercial (C): Utl + ppl + gds -> lfs
+
+    Extras:
+        Road (R): Connection, transfers Rsr + Utl
+        Empty Cell (E): Nothing
+
+------------------------------------------------------------------------------------
+
+Distribution (Dist):
+    Srv Dist: Boolean, zones either has it or not. Use Euclidean or Manhattan to calculate hypotenuse.
+    Utl Dist: From an Utl zone, all adjacent zones (except E) will receive Utl as much as demands, Roads will connect.
+    Rsr Dist: All Rsr shared equally on any zone that will use them. No connection needed.
+
+------------------------------------------------------------------------------------
+
+Levels:
+    H: Utl -> lvl 1 + sec + hlt -> lvl 2 + lfs -> lvl 3
+    I: ppl + elc + wtr -> lvl 1 + sec -> lvl 2 + excess ppl -> lvl 3
+    C: ppl + gds + Utl -> lvl 1 + sec -> lvl 2 + excess ppl + excess gds -> lvl 3
+
+------------------------------------------------------------------------------------
+
+Outputs:        LVL           0               1               2               3
+    H:          ppl           0               m              2m            2m + lfs as much as received
+    I:          gds           0               m              2m            2m + ppl as much as received
+    I:          lfs           0               m              2m            2m + min(ppl, gds) received
+
+------------------------------------------------------------------------------------
+
+Utility Demands:
+    A zones demand for the next tick equals to the output of it in the current tick (min 1).
+    So basically a zone that produces more also demands more to protect that output.
+    This causes zones closer to the Utl zones to get more Utl from them while further ones receive less.
+
+------------------------------------------------------------------------------------
+
+Simulation: Each tick will run at this procedure. You have to provide map ad tick for simulation.
+    Step 1: Srv zones applied on other zones within that range.
+    Step 2: Utl Dist via BFS (breadth first search).
+    Step 3: Rsr production from previous tick distributed (tick 0 = 0 Rsr).
+    Step 4: Rsr zones (H, I, C) updated. Each zone computes its new lvl and output based on the last tick.
+    Step 5: All production accumulated (summed up) for the distribution (division) on next tick.
+
+    In the first tick, simulation sets itself, steps are applied but there is no production yet. From the tick 2 and
+    onwards; H will produce ppl to enable and run I and C, they will produce Rsr and H will lvl up. At least that's
+    what I understand. So the key idea here:
+
+    H -> ppl -> I & C -> gds + lfs -> H +lvl -> LOOP
+
+------------------------------------------------------------------------------------
+
+Important Notes: Sentences that starts with "??" are my personal opinions or issues.
+    You have to explicitly mention the method you used for hypotenuse calculation (Euclidean or Manhattan).
+    Utl can't reach zones after an E.
+    ?? I have no idea what does an R do because both Rsr and Utl do not need it.
+       It looks like R is just a blank zone that won't spend Utl and only transfer it.??
+    Each Srv zone has 4 lvls: 0 -> 1 -> 2 -> 3.
+    If conditions met, Srv zones will lvl up.
+    If a zone loses all Utls its lvl directly drops to 0.
+    m in Output equals to the minimum of the Utl that zone received: 1 elc, 2 wtr, 3 int -> m = 1
+    ?? I don't know if a lvl 0 zone produces 0 or 1. Output says 0 but in the Demand it says min 1 ??
+    In Utl Dist, you will give Utl to adjacent zones, and then to adjacent of adjacent zones...
+    ?? I don't know either if Utl Dist works like a square (like in the instructions) or as a circle, nor which zone will get it ??
+    ?? It actually tries to say Utl shared among the possible zones in the Distribution, but in Demands, it says
+       every zone has to get Utl as much as the output from the last tick. Sooooo, why not the closest zone just
+       take all of Utl? There is no rule that preventing that. In my opinion at the beginning all possible zones
+       will get the same amount, then at the next ticks they will try to maintain that.??
+    In an example instructor says; assume H requires 1 elc and 2 for C. No further info given.
+    ?? Another problem is: you have to wait in the first tick for H to generate ppl, so I and C can run. (tick 1)
+       But, to run C, you need gds, which is produced by I. (tick 2)
+       Then C will produce lfs, and it will accumulate with other Rsr. (tick 3)
+       In the next tick, loop will start and every Rsr will be distributed, and H will lvl up if possible. (tick 4)
+       Now I noticed H only need Utl to lvl up, so it will lvl up on the first tick.
+       You can still apply whatever I said, because lvl doesn't change anything here.
+       You can also see that H will lvl up on the first two and fourth ticks if possible. (tick 1, 2 and 4)
+       Anyway, As you can see, you have to wait few ticks here.??
+    All countable fields will be Integer. So you will lose values on division (10 / 3 = 3, 1 lose).
+
+------------------------------------------------------------------------------------
+
+Project Completion and Delivery
+    Last date is 5th of June. (isn't this too short (implied sarcasm))
+    Have to use git and must create a team repository.
+    Project will be formatted as .jar. Also, you must create a manifest, which is a text that refers to your main method (psvm).
+    You have to run the simulation with args: java -jar ObjectVilleGame.jar mymap.txt 5  (map and ticks).
+    You have to write a Project Report, and it must be in the .pdf format.
+    You have to submit a task sheet (includes 2 sheets; Task List and Developer List)with project.
+    Project will be delivered as a .zip. (.rar and others are not allowed)
+    Please still read the original instructions.
